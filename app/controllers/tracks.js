@@ -2,7 +2,8 @@ module.exports = function (db, utils, other) {
     
   var fs = other.fs,
   id3 = other.id3,
-  async = other.async
+  async = other.async,
+  musicFolder = './music/'
 
   /********
    * Track *
@@ -14,7 +15,7 @@ module.exports = function (db, utils, other) {
    */
   sync: function (req, res) {
     // Get all tracks in the music folder
-    fs.readdir('./music/', function (err, tracksFileSystem) {
+    fs.readdir(musicFolder, function (err, tracksFileSystem) {
       if(err) return utils.error(res, 500, err)
 
       // Get all tracks in the database
@@ -35,7 +36,7 @@ module.exports = function (db, utils, other) {
         // Get metadata for each track
         tracksNotInDatabase.forEach(function (track) {
           calls.push(function (callback) {
-            id3({ file: './music/'+track, type: id3.OPEN_LOCAL }, function(err, tags) {
+            id3({ file: musicFolder+track, type: id3.OPEN_LOCAL }, function(err, tags) {
               tracksToSaveToDatabase.push({
                 id: track,
                 title: tags.title,
@@ -81,7 +82,7 @@ module.exports = function (db, utils, other) {
 
       tracks.forEach(function (track) {
         calls.push(function (callback) {
-          id3({ file: './music/'+track.id, type: id3.OPEN_LOCAL }, function(err, tags) {
+          id3({ file: musicFolder+track.id, type: id3.OPEN_LOCAL }, function(err, tags) {
             tags.id = track.id
             output.push(tags);
             callback(null, track);
@@ -102,7 +103,7 @@ module.exports = function (db, utils, other) {
 
   stream: function (req, res) {
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.sendfile('./music/'+req.params.id);
+    res.sendfile(musicFolder+req.params.id);
 
     db.Track.findOne({ id: req.params.id }, function (err, track) {
       if(err) return;
