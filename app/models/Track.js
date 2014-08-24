@@ -2,7 +2,6 @@ module.exports = function (mongoose, config) {
 
   var Schema = mongoose.Schema
   	, ObjectId = Schema.ObjectId
-    , bcrypt = require('bcrypt')
     , salt_factor = config.salt || 10
   
   // Define user schema
