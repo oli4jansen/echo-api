@@ -6,7 +6,7 @@ module.exports = function (mongoose, config) {
   
   // Define user schema
   var trackSchema = new Schema({
-    id: { type: String, required: true, index: { unique: true } },
+    src: { type: String, required: true, index: { unique: true } },
   	title: { type: String, required: true },
   	artist: { type: String, required: true },
     album: { type: String, required: true },

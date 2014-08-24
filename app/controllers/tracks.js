@@ -19,12 +19,12 @@ module.exports = function (db, utils, other) {
       if(err) return utils.error(res, 500, err)
 
       // Get all tracks in the database
-      db.Track.find({}, 'id', function (err, tracks) {
+      db.Track.find({}, 'src', function (err, tracks) {
 
         // Only keep the track IDs/filenames in the array
         var tracksDatabase = [];
         tracks.forEach(function (track) {
-          tracksDatabase.push(track.id);
+          tracksDatabase.push(track.src);
         });
 
         // Calculate the difference (= the tracks that are missing in the database)
@@ -35,52 +35,31 @@ module.exports = function (db, utils, other) {
 
         // Get metadata for each track
         tracksNotInDatabase.forEach(function (track) {
-          calls.push(function (callback) {
-            id3({ file: musicFolder+track, type: id3.OPEN_LOCAL }, function(err, tags) {
-              console.log(tags);
-              if(err) {
-                console.log(err);
-              }else{
-                tracksToSaveToDatabase.push({
-                  id: track,
-                  title: tags.title,
-                  artist: tags.artist,
-                  album: tags.album,
-                  plays: 0
-                });
-              }
-              callback(null, track);
-            });
-          })
+          tracksToSaveToDatabase.push({
+            src: track,
+            title: track,
+            artist: 'unknown artist',
+            album: 'unknown album',
+            plays: 0
+          });
         });
 
-        // When all metadata is collected, we can save it to the database
-        async.parallel(calls, function(err, result) {
+        console.log(tracksToSaveToDatabase);
+
+        db.Track.create(tracksToSaveToDatabase, function (err) {
           if (err) return utils.error(res, 500, err)
-          db.Track.create(tracksToSaveToDatabase, function (err) {
-            if (err) return utils.error(res, 500, err)
-            res.json(tracksToSaveToDatabase || [])
-          });
+          res.json(tracksToSaveToDatabase || [])
         });
       });
     })
   },
 
   /*
-   * Sync Database
+   * Clear Database
    */
-  testSync: function (req, res) {
-    // Get all tracks in the music folder
-    fs.readdir(musicFolder, function (err, tracksFileSystem) {
-      if(err) return utils.error(res, 500, err)
-
-
-      id3({ file: musicFolder+tracksFileSystem[0], type: id3.OPEN_LOCAL }, function(err, tags) {
-        console.log(tags);
-        if(err) {
-          console.log(err);
-        }
-      });
+  clear: function (req, res) {
+    db.Track.remove({}, function (err) {
+      res.json(err || []);
     })
   },
 
@@ -97,16 +76,16 @@ module.exports = function (db, utils, other) {
    * Get Track Info
    */
   info: function (req, res) {
-    if(!req.params.id) return utils.error(res, 403, 'Requires a track ID')
+    if(!req.params._id) return utils.error(res, 403, 'Requires a track ID')
 
-    db.Track.find({ id: req.params.id }, function (err, tracks) {
+    db.Track.find({ _id: req.params._id }, function (err, tracks) {
       var output = [];
       var calls = [];
 
       tracks.forEach(function (track) {
         calls.push(function (callback) {
-          id3({ file: musicFolder+track.id, type: id3.OPEN_LOCAL }, function(err, tags) {
-            tags.id = track.id
+          id3({ file: musicFolder+track.src, type: id3.OPEN_LOCAL }, function(err, tags) {
+            tags.src = track.src
             output.push(tags);
             callback(null, track);
           })
@@ -126,13 +105,38 @@ module.exports = function (db, utils, other) {
 
   stream: function (req, res) {
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.sendfile(musicFolder+req.params.id);
+    res.sendfile(musicFolder+req.params._id);
 
-    db.Track.findOne({ id: req.params.id }, function (err, track) {
+    db.Track.findOne({ _id: req.params._id }, function (err, track) {
       if(err) return;
       track.plays++;
       track.save(function (err) {
         if(err) console.log(err);
+      });
+    });
+  },
+
+  /*
+   * Update Track Info
+   */
+
+  update: function (req, res) {
+    console.log(req.params);
+    console.log(req.body);
+
+    if(!req.params._id || !req.body.title || !req.body.artist || !req.body.album) return utils.error(res, 403, 'Requires data')
+
+    db.Track.findOne({ _id: req.params._id }, function (err, track) {
+      if(err) return utils.error(res, 403, err);
+      console.log(track);
+
+      track.title = req.body.title;
+      track.artist = req.body.artist;
+      track.album = req.body.album;
+
+      track.save(function (err) {
+        if(err) console.log(err);
+        res.json(track || {});
       });
     });
   },

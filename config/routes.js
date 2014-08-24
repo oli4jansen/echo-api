@@ -12,10 +12,11 @@ module.exports = function (app, http, db, fs, async) {
 
   // Tracks
   app.get('/tracks', t.list)
+  app.get('/tracks/clear', t.clear)
   app.get('/tracks/sync', t.sync)
-  app.get('/tracks/test-sync', t.testSync)
-  app.get('/tracks/:id/info', t.info)
-  app.get('/tracks/:id', t.stream)
+  app.get('/tracks/:_id/info', t.info)
+  app.get('/tracks/:_id', t.stream)
+  app.put('/tracks/:_id', t.update)
 
   app.get('/search/:query', s.search)
   
