@@ -1,7 +1,7 @@
 var path = require('path')
   , rootPath = path.normalize(__dirname + '/..')
   , env = process.env.NODE_ENV || 'development'
-  , port = 8000
+  , port = 80
 
 var config = {
   development: {
@@ -19,7 +19,7 @@ var config = {
       name: 'echo-api'
     },
     port: port,
-    db: 'mongodb://localhost/db-production',
+    db: 'mongodb://0.0.0.0:27017/db-production',
   }
 };
 
