@@ -37,6 +37,7 @@ module.exports = function (db, utils, other) {
         tracksNotInDatabase.forEach(function (track) {
           calls.push(function (callback) {
             id3({ file: musicFolder+track, type: id3.OPEN_LOCAL }, function(err, tags) {
+              console.log(tags);
               if(err) {
                 console.log(err);
               }else{
@@ -61,6 +62,24 @@ module.exports = function (db, utils, other) {
             res.json(tracksToSaveToDatabase || [])
           });
         });
+      });
+    })
+  },
+
+  /*
+   * Sync Database
+   */
+  testSync: function (req, res) {
+    // Get all tracks in the music folder
+    fs.readdir(musicFolder, function (err, tracksFileSystem) {
+      if(err) return utils.error(res, 500, err)
+
+
+      id3({ file: musicFolder+tracksFileSystem[0], type: id3.OPEN_LOCAL }, function(err, tags) {
+        console.log(tags);
+        if(err) {
+          console.log(err);
+        }
       });
     })
   },

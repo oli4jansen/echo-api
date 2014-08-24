@@ -13,6 +13,7 @@ module.exports = function (app, http, db, fs, async) {
   // Tracks
   app.get('/tracks', t.list)
   app.get('/tracks/sync', t.sync)
+  app.get('/tracks/test-sync', t.testSync)
   app.get('/tracks/:id/info', t.info)
   app.get('/tracks/:id', t.stream)
 
