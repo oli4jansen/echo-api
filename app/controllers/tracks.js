@@ -37,13 +37,17 @@ module.exports = function (db, utils, other) {
         tracksNotInDatabase.forEach(function (track) {
           calls.push(function (callback) {
             id3({ file: musicFolder+track, type: id3.OPEN_LOCAL }, function(err, tags) {
-              tracksToSaveToDatabase.push({
-                id: track,
-                title: tags.title,
-                artist: tags.artist,
-                album: tags.album,
-                plays: 0
-              });
+              if(err) {
+                console.log(err);
+              }else{
+                tracksToSaveToDatabase.push({
+                  id: track,
+                  title: tags.title,
+                  artist: tags.artist,
+                  album: tags.album,
+                  plays: 0
+                });
+              }
               callback(null, track);
             });
           })
