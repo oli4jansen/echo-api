@@ -1,22 +1,22 @@
-module.exports = function (app, http, db) {
+module.exports = function (app, http, db, fs, async) {
   
-  var utils = require('../app/lib/utils')(db)
+  var utils = require('../app/lib/utils')(db),
+  id3 = require('id3js')
   
   function route(name, other) {
     return require('../app/controllers/'+name)(db, utils, other)
   }
   
-  var u = route('users')
-  
-  // users
-  app.post('/user', utils.body('email password name'), utils.validPass, u.create)
-  app.post('/:role(client|admin)/login', utils.body('email password'), utils.deauth, u.login)
-  app.post('/user/logout', utils.deauth, u.logout)
-  app.put('/user/password', utils.auth, utils.validPass, u.password)
-  app.get('/user/auth', u.auth)
-  app.get('/:role(client|trainer|admin)s', utils.admin, u.list)
-  app.get('/user/:uid([0-9a-f]+)', utils.admin, u.show)
-  app.delete('/user', utils.body('password'), utils.auth, u.delete)
+  var t = route('tracks', {fs:fs,id3:id3,async:async})
+  var s = route('search', {fs:fs,id3:id3,async:async})
+
+  // Tracks
+  app.get('/tracks', t.list)
+  app.get('/tracks/sync', t.sync)
+  app.get('/tracks/:id/info', t.info)
+  app.get('/tracks/:id', t.stream)
+
+  app.get('/search/:query', s.search)
   
   // catch-all
   app.get('*', function (req, res) { res.status(404).json({ error:'Invalid GET request' }) })

@@ -3,6 +3,7 @@ var config   = require('./config')
   , mongoose = require('mongoose')
   , fs       = require('fs')
   , db       = {}
+  , async    = require('async')
 
 // connect mongoose
 mongoose.connect(config.db, { server: { keepAlive: 1, auto_reconnect: true } })
@@ -13,6 +14,10 @@ conn.on('error', function () {
   console.log('\nMongoose failed to connect:', config.db)
   mongoose.disconnect()
 })
+
+Array.prototype.diff = function(a) {
+  return this.filter(function(i) {return a.indexOf(i) < 0;});
+};
 
 // mongoose connection 'open'
 conn.on('open', function () {
@@ -25,16 +30,13 @@ conn.on('open', function () {
       db[file.replace('.js', '')] = require(modelsPath + '/' + file)(mongoose, config)
   })
   
-  // config Nomadic Fitness affiliate and admin
-  require('./config/admin')(config, db)
-
   // create app
   var app   = express()
     , http  = require('http').createServer(app)
 
   // config app
   require('./config/express')(app, config)
-  require('./config/routes')(app, http, db)
+  require('./config/routes')(app, http, db, fs, async)
   
   app.get('/', function (req, res) {
     res.render('index')
@@ -42,6 +44,6 @@ conn.on('open', function () {
 
   // serve app
   http.listen(config.port, function () {
-    console.log("Nomadic Fitness API running at http://" + config.host + ":" + config.port)
+    console.log("Echo API running at http://" + config.host + ":" + config.port)
   })
 })

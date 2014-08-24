@@ -18,17 +18,9 @@ module.exports = function (app, config) {
 
   // API session store
   var MongoStore = require('connect-mongo')(express)
-    , sessions   = new MongoStore({
-      url: config.db,
-      clear_interval: 3600, //clear expired sessions hourly
-      auto_reconnect: true,
-      keep_alive: true
-    })
 
   // Set app vars
   app.set('port', config.port);
-  app.set('views', config.root + '/app/views');
-  app.engine('html', require('ejs').renderFile);
 
   // Configure API environment
   app.configure(function () {
@@ -38,17 +30,11 @@ module.exports = function (app, config) {
     app.use(express.urlencoded({ limit:'10mb' }))
     app.use(express.cookieParser())
     app.use(express.methodOverride())
-    app.use(express.static(config.root + '/media'))
     app.use(express.static(config.root + '/public'))
     app.use(express.favicon(config.root + '/public/img/favicon.ico'))
-    app.use(express.session({
-      store:sessions,
-      secret:'7]fo+>+yR-&}}|!Kh>kC6Vbl:Krb)TrG&Ibkcu~AcRV/t[$+H+:_xb#a4G20MK>a',
-      cookie:{maxAge:7 * 24 * 60 * 60 * 1000} // one week
-    }))
     app.use(app.router)
     app.use(function (req, res) {
-      res.render('404')
+      res.send('404')
     })
   })
 
@@ -56,7 +42,7 @@ module.exports = function (app, config) {
   app.all('*', function (req, res, next) {
     if (!req.get('Origin')) return next();
     // use "*" here to accept any origin
-    res.set('Access-Control-Allow-Origin', 'http://127.0.0.1:9090');
+    res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
     res.set('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type');
     res.set('Access-Control-Allow-Credentials', 'true');
